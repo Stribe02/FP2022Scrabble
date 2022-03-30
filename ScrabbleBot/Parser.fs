@@ -1,16 +1,10 @@
-﻿module ImpParser
+﻿module internal Parser
 
+    open ScrabbleUtil // NEW. KEEP THIS LINE.
     open System
     open Eval
-
-    (*
-
-    The interfaces for JParsec and FParsecLight are identical and the implementations should always produce the same output
-    for successful parses although running times and error messages will differ. Please report any inconsistencies.
-
-    *)
-
     open FParsecLight.TextParser     // Industrial parser-combinator library. Use for Scrabble Project.
+    
     
     let pIntToChar  = pstring "intToChar"
     let pPointValue = pstring "pointValue"
@@ -96,31 +90,20 @@
     let stmntParse = pstring "not implemented"
 
 (* These five types will move out of this file once you start working on the project *)
-    type coord      = int * int
-    type squareProg = Map<int, string>
-    type boardProg  = {
-            prog       : string;
-            squares    : Map<int, squareProg>
-            usedSquare : int
-            center     : coord
-    
-            isInfinite : bool   // For pretty-printing purposes only
-            ppSquare   : string // For pretty-printing purposes only
-        }
+     
 
     type word   = (char * int) list
-    type square = Map<int, squareFun>
+    type square = Map<int, word -> int -> int -> int>
 
-    let parseSquareProg _ = failwith "not implemented"
+    let parseSquareFun _ = failwith "not implemented"
 
-    let parseBoardProg _ = failwith "not implemented"
+    let parseBoardFun _ = failwith "not implemented"
 
-    type boardFun2 = coord -> StateMonad.Result<square option, StateMonad.Error>
+    type boardFun = coord -> square option
     type board = {
         center        : coord
         defaultSquare : square
-        squares       : boardFun2
+        squares       : boardFun
     }
 
-    let mkBoard (bp : boardProg) = failwith "not implemented"
-
+    let parseBoardProg (bp : boardProg) : board = failwith "not implemented"

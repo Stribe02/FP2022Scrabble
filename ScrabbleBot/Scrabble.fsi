@@ -1,6 +1,6 @@
 ﻿namespace YourClientName
 
-module Scrabble =
+module internal Scrabble =
 
     open ScrabbleUtil
     open System.IO
