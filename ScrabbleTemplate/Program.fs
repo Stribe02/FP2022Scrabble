@@ -22,8 +22,8 @@ let spawnMultiples name dict bot =
 let main argv =
     ScrabbleUtil.DebugPrint.toggleDebugPrint true // Change to false to supress debug output
 
-    System.Console.BackgroundColor <- System.ConsoleColor.White
-    System.Console.ForegroundColor <- System.ConsoleColor.Black
+    //System.Console.BackgroundColor <- System.ConsoleColor.White
+    //System.Console.ForegroundColor <- System.ConsoleColor.Black
     System.Console.Clear()
 
 
@@ -63,8 +63,8 @@ let main argv =
     //    List.iter (fun str -> ScrabbleUtil.DebugPrint.debugPrint (sprintf "%s\n" str)) incorrectWords
         
     // Uncomment this line to call your client
-    // let players    = [("Your name here", dictionary, YourClientName.Scrabble.startGame)]
-    let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
+    let players    = [("Wordfeud-bot", dictionary, Wordfeud.Scrabble.startGame)]
+    // let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
         
 
     do ScrabbleServer.Comm.startGame 

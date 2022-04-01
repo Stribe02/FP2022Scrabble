@@ -172,7 +172,7 @@
 
     let stmntEval2 stm = failwith "Not implemented"
 
-(* Part 4 (Optional) *) 
+(* Part 4 *) 
 
     type word = (char * int) list
     type squareFun = word -> int -> int -> Result<int, Error>
@@ -193,4 +193,3 @@
     }
 
     let mkBoard c defaultSq boardStmnt ids = failwith "Not implemented"
-    
