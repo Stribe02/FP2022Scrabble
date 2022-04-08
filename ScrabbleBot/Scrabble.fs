@@ -54,8 +54,9 @@ module State =
     let dict st          = st.dict
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
-
-
+    let removeFromHand st ms = List.fold (fun acc (x, k) -> MultiSet.removeSingle (x k) acc) st.hand ms
+    let addToHand st newPieces = List.fold (fun acc (x, k) -> MultiSet.addSingle(x k) acc) st.hand newPieces
+   
 module Scrabble =
     open System.Threading
 
@@ -77,11 +78,9 @@ module Scrabble =
 
             match msg with
             | RCM (CMPlaySuccess(moves, points, newPieces)) ->
-                (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                
-                let removeFromHand = List.fold (fun acc hhand -> MultiSet.removeSingle (x hhand) acc) st.hand moves //hvorfor st.hand moves?
-                let addToHand = List.fold (fun acc hhand -> MultiSet.addSingle(x hhand) acc) removeFromHand newPieces
-                               
+                (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)  
+                let removeFromHand = List.fold (fun acc piece -> MultiSet.removeSingle (fst(snd(piece))) acc) st.hand moves
+                let addToHand = List.fold (fun acc (x, k) -> MultiSet.add x k acc) removeFromHand newPieces          
                 let st' = State.mkState st.board st.dict st.playerNumber addToHand //needs state, board, playernumber, hand
                 aux st'
             | RCM (CMPlayed (pid, moves, points)) ->
