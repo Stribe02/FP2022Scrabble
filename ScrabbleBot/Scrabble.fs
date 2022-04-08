@@ -55,6 +55,7 @@ module State =
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
 
+
 module Scrabble =
     open System.Threading
 
@@ -75,20 +76,28 @@ module Scrabble =
             debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
             match msg with
-            | RCM (CMPlaySuccess(ms, points, newPieces)) ->
+            | RCM (CMPlaySuccess(moves, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
-                let st' = st // This state needs to be updated
+                
+                let removeFromHand = List.fold (fun acc hhand -> MultiSet.removeSingle (x hhand) acc) st.hand moves //hvorfor st.hand moves?
+                let addToHand = List.fold (fun acc hhand -> MultiSet.addSingle(x hhand) acc) removeFromHand newPieces
+                               
+                let st' = State.mkState st.board st.dict st.playerNumber addToHand //needs state, board, playernumber, hand
                 aux st'
-            | RCM (CMPlayed (pid, ms, points)) ->
+            | RCM (CMPlayed (pid, moves, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = st // This state needs to be updated
+                let st' = State.mkState st.board st.dict st.playerNumber st.hand //needs state, board, playernumber, hand
                 aux st'
-            | RCM (CMPlayFailed (pid, ms)) ->
+                
+            | RCM (CMPlayFailed (pid, moves)) ->
                 (* Failed play. Update your state *)
-                let st' = st // This state needs to be updated
+                let st' = State.mkState st.board st.dict st.playerNumber st.hand //needs state, board, playernumber, hand
                 aux st'
+                
             | RCM (CMGameOver _) -> ()
+            
             | RCM a -> failwith (sprintf "not implmented: %A" a)
+            
             | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
 
 
