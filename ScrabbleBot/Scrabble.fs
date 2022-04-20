@@ -52,9 +52,7 @@ module State =
 
     let mkState b bww d pn h = {board = b; boardWithWords = bww; dict = d;  playerNumber = pn; hand = h }    
 
-
     let board st          = st.board
-    
     let boardWithWords st = st.boardWithWords
     let dict st           = st.dict
     let playerNumber st   = st.playerNumber
@@ -85,7 +83,7 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(moves, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)  
-                debugPrint (sprintf "----------You made a successful move! New tiles added to hand ---------")
+                debugPrint (sprintf "----------You made a successful move! New tiles added to hand---------")
                 
                 let removedFromHand = State.removeFromHand st.hand moves
                 let addedToHand = State.addToHand removedFromHand newPieces
