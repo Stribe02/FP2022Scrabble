@@ -1,5 +1,6 @@
 ﻿namespace Wordfeud
 
+open Parser
 open ScrabbleUtil
 open ScrabbleUtil.ServerCommunication
 
@@ -42,18 +43,22 @@ module State =
     // information, such as number of players, player turn, etc.
 
     type state = {
-        board         : Parser.board
-        dict          : ScrabbleUtil.Dictionary.Dict
-        playerNumber  : uint32
-        hand          : MultiSet.MultiSet<uint32>
+        board          : Parser.board
+        boardWithWords : Map<coord, uint32>
+        dict           : ScrabbleUtil.Dictionary.Dict
+        playerNumber   : uint32
+        hand           : MultiSet.MultiSet<uint32>
     }
 
-    let mkState b d pn h = {board = b; dict = d;  playerNumber = pn; hand = h }
+    let mkState b bww d pn h = {board = b; boardWithWords = bww; dict = d;  playerNumber = pn; hand = h }    
 
-    let board st         = st.board
-    let dict st          = st.dict
-    let playerNumber st  = st.playerNumber
-    let hand st          = st.hand
+
+    let board st          = st.board
+    
+    let boardWithWords st = st.boardWithWords
+    let dict st           = st.dict
+    let playerNumber st   = st.playerNumber
+    let hand st           = st.hand
     
     let removeFromHand hand moves = List.fold (fun acc piece -> MultiSet.removeSingle (fst(snd(piece))) acc) hand moves
     let addToHand hand newPieces = List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
@@ -80,6 +85,7 @@ module Scrabble =
             match msg with
             | RCM (CMPlaySuccess(moves, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)  
+                debugPrint (sprintf "----------You made a successful move! New tiles added to hand ---------")
                 
                 let removedFromHand = State.removeFromHand st.hand moves
                 let addedToHand = State.addToHand removedFromHand newPieces
@@ -87,17 +93,29 @@ module Scrabble =
                 // løbe igennem alle bogstaver der er lagt
                 // hvordan får vi infomationer om tilen til uint - hvordan ved vi hvilket bogstav det er
                 // 1. hold styr på bogstaver
-                let st' = State.mkState st.board st.dict st.playerNumber addedToHand //needs state, board, playernumber, hand
+
+                let boardWithNewWordAdded = List.fold (fun acc (coord, (tileNumber, (_,_))) -> Map.add coord tileNumber acc) st.boardWithWords moves
+                
+                let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addToHand
+
                 aux st'
                 
             | RCM (CMPlayed (pid, moves, points)) ->
                 (* Successful play by other player. Update your state *)
-                let st' = State.mkState st.board st.dict st.playerNumber st.hand //needs state, board, playernumber, hand
+                debugPrint (sprintf "----------Player %d made a successful move!---------" (State.playerNumber st))
+                
+                let boardWithNewWordAdded = List.fold (fun acc (coord, (tileNumber, (_,_))) -> Map.add coord tileNumber acc) st.boardWithWords moves
+
+                let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber st.hand
                 aux st'
                 
             | RCM (CMPlayFailed (pid, moves)) ->
                 (* Failed play. Update your state *)
-                let st' = State.mkState st.board st.dict st.playerNumber st.hand //needs state, board, playernumber, hand
+                debugPrint (sprintf "----------Player %d made a failed a move!---------" (State.playerNumber st))
+                
+                let boardWithNewWordAdded = List.fold (fun acc (coord, (tileNumber, (_,_))) -> Map.add coord tileNumber acc) st.boardWithWords moves
+
+                let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber st.hand
                 aux st'
                 
             | RCM (CMGameOver _) -> ()
@@ -110,7 +128,7 @@ module Scrabble =
         aux st
 
     let startGame 
-            (boardP : boardProg) 
+            (boardP : boardProg)
             (dictf : bool -> Dictionary.Dict) 
             (numPlayers : uint32) 
             (playerNumber : uint32) 
@@ -133,5 +151,5 @@ module Scrabble =
                   
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) MultiSet.empty hand
 
-        fun () -> playGame cstream tiles (State.mkState board dict playerNumber handSet)
+        fun () -> playGame cstream tiles (State.mkState board Map.empty dict playerNumber handSet)
         
