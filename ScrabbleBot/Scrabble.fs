@@ -54,6 +54,9 @@ module State =
     let dict st          = st.dict
     let playerNumber st  = st.playerNumber
     let hand st          = st.hand
+    
+    let removeFromHand hand moves = List.fold (fun acc piece -> MultiSet.removeSingle (fst(snd(piece))) acc) hand moves
+    let addToHand hand newPieces = List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
    
 module Scrabble =
     open System.Threading
@@ -78,10 +81,13 @@ module Scrabble =
             | RCM (CMPlaySuccess(moves, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)  
                 
-                let removeFromHand = List.fold (fun acc piece -> MultiSet.removeSingle (fst(snd(piece))) acc) st.hand moves
-                let addToHand = List.fold (fun acc (x, k) -> MultiSet.add x k acc) removeFromHand newPieces          
+                let removedFromHand = State.removeFromHand st.hand moves
+                let addedToHand = State.addToHand removedFromHand newPieces
                 
-                let st' = State.mkState st.board st.dict st.playerNumber addToHand //needs state, board, playernumber, hand
+                // løbe igennem alle bogstaver der er lagt
+                // hvordan får vi infomationer om tilen til uint - hvordan ved vi hvilket bogstav det er
+                // 1. hold styr på bogstaver
+                let st' = State.mkState st.board st.dict st.playerNumber addedToHand //needs state, board, playernumber, hand
                 aux st'
                 
             | RCM (CMPlayed (pid, moves, points)) ->
