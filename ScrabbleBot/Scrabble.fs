@@ -96,11 +96,11 @@ module Scrabble =
 
                 let boardWithNewWordAdded = List.fold (fun acc (coord, (tileNumber, (_,_))) -> Map.add coord tileNumber acc) st.boardWithWords moves
                 
-                let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addToHand
+                let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand
 
                 aux st'
                 
-            | RCM (CMPlayed (pid, moves, points)) ->
+            | RCM (CMPlayed (playerId, moves, points)) ->
                 (* Successful play by other player. Update your state *)
                 debugPrint (sprintf "----------Player %d made a successful move!---------" (State.playerNumber st))
                 
@@ -109,7 +109,7 @@ module Scrabble =
                 let st' = State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber st.hand
                 aux st'
                 
-            | RCM (CMPlayFailed (pid, moves)) ->
+            | RCM (CMPlayFailed (playerId, moves)) ->
                 (* Failed play. Update your state *)
                 debugPrint (sprintf "----------Player %d made a failed a move!---------" (State.playerNumber st))
                 
