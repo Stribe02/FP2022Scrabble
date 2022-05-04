@@ -13,7 +13,7 @@ module internal Parser
         
     type board = {
         center        : coord
-        defaultSquare : square
+        usedSquare : square
         squares       : boardFun
     }
 

@@ -182,13 +182,13 @@
 
     type coord = int * int
 
-    type boardFun = coord -> Result<squareFun option, Error> 
+    type boardFun = coord -> Result<Map<int, squareFun> option, Error> 
 
     let stmntToBoardFun stm m = failwith "Not implemented"
 
     type board = {
         center        : coord
-        defaultSquare : squareFun
+        usedSquare    : squareFun
         squares       : boardFun
     }
 

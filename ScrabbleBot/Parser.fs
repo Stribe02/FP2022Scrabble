@@ -101,9 +101,9 @@
         
     type board = {
         center        : coord
-        defaultSquare : square
+        usedSquare    : square
         squares       : boardFun
     }
     
     // Default (unusable) board in case you are not implementing a parser for the DSL.
-    let mkBoard : boardProg -> board = fun _ -> {center = (0,0); defaultSquare = Map.empty; squares = fun _ -> Success (Some Map.empty)}
+    let mkBoard : boardProg -> board = fun _ -> {center = (0,0); usedSquare = Map.empty; squares = fun _ -> Success (Some Map.empty)}

@@ -1,5 +1,6 @@
 ﻿namespace Wordfeud
 
+    open System
     open Parser
     open ScrabbleUtil
     open ScrabbleUtil.ServerCommunication
@@ -93,6 +94,43 @@
                 let msg = recv cstream
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
+                //find out what is on the board, look through coords down and right
+                let lookThroughCoords =
+                    Map.fold (fun acc (spaceImLookingAt: coord) ->
+                            let checkAvailableToTheLeftOfWord ((x,y): coord) =
+                                if (Map.tryFind (x-1,y) st.boardWithWords) then false
+                                else true
+ 
+                            let checkIfAvailableToTheRightOfWord ((x,y): coord) =
+                                if (Map.tryFind (x+1,y) st.boardWithWords) then false
+                                else true
+                                
+                            if(checkAvailableToTheLeftOfWord && checkIfAvailableToTheRightOfWord) then
+                                
+                              
+                                let rec lookRight ((x,y): coord) (h: State.hand) (d: Dict) =
+                                    if(Dict.lookup (fst(h)) d) then Dict.step 
+                                    
+                                    
+                                
+                            let checkAvailableUpOfWord ((x,y): coord) =
+                                if (Map.tryFind (x,y+1) st.boardWithWords) then false
+                                else true
+                            let checkAvailableDownOfWord ((x,y): coord) =
+                                if (Map.tryFind (x,y-1) st.boardWithWords) then false
+                                else true
+                                
+                            if(checkAvailableUpOfWord && checkAvailableDownOfWord) then                                
+                                let rec lookDown ((x,y): coord) (isOccupied: bool) =
+                                    if (Map.tryFind (x,y) st.boardWithWords) then lookRight (x, y+1) false
+                                    else isFree = true
+                                
+                        ) st.boardWithWords
+                
+                //find out what words you can make in combination with the board
+                //the board is infinite, so you always take a tile on the board as your first letter
+                
+                
                 match msg with
                 | RCM (CMPlaySuccess (moves, points, newPieces)) ->
                     (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
@@ -116,7 +154,7 @@
                     let st' =
                         State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand
 
-                    aux st'
+                    aux st' 
 
                 | RCM (CMPlayed (pid, moves, points)) ->
                     (* Successful play by other player. Update your state *)
