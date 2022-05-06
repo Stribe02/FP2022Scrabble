@@ -4,6 +4,7 @@
     open MultiSet
     open Parser
     open ScrabbleUtil
+    open ScrabbleUtil.Dictionary
     open ScrabbleUtil.ServerCommunication
 
     open System.IO
@@ -75,9 +76,17 @@
         let addToHand hand newPieces =
             List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
             
-        let getCharFromCoords hand pieces =
-            hand |>
-            MultiSet.fold (fun _ x -> Map.find x pieces)
+            
+        //step med givent bogstav og states dict
+        // vi får et dict tilbage, som skal bruges
+        // fold over hånd og gennem hånden indtil vi får et bogstav vi kan steppe med.
+        // fjern bogstav fra hånd, opdateret hånd gives med videre til næste step i dict
+        // Abort, hvis vi ikke kan ligge et ord
+        // Prøve alle muligheder på hele hånden
+        let rec checkForPlaceableWord ((x,y): coord) (dict: Dict) (word: char) (hand: MultiSet<uint32>) =
+           function
+           Dict.step c::word dict
+    
 
     module Scrabble =
         open System.Threading
@@ -104,6 +113,7 @@
                 
                 let lookThroughCoords =
                     Map.fold (fun acc (spaceImLookingAt: coord) ->
+                        
                         // CASE 1: 
                         // is there something over?
                         // if not, find ud af hvilket bogstav vi står ved
@@ -113,6 +123,11 @@
                             // fjern bogstav fra hånd, opdateret hånd gives med videre til næste step i dict
                             // Abort, hvis vi ikke kan ligge et ord
                             // Prøve alle muligheder på hele hånden
+                        let checkAvailableUpOfWord ((x,y): coord) =
+                                if (Map.tryFind (x,y+1) st.boardWithWords) then false
+                                else true
+                        if (checkAvailableUpOfWord) then State.checkForPlaceableWord spaceImLookingAt st.dict Map.find(spaceImLookingAt) st.hand // help method
+                            
                             
                         // SECOND CASE: DER LIGGER NOGET OVER BOGSTAVET
                             // 2 muligheder:
