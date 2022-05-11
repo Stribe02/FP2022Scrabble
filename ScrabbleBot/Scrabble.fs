@@ -84,29 +84,10 @@
         // Abort, hvis vi ikke kan ligge et ord
         // Prøve alle muligheder på hele hånden
         
-       // let checkForPlaceableWordDown ((x,y): coord) (dict: Dict) (word: char) (hand: MultiSet<uint32>) =
-         ////    let newCord = (x, y-1)
-        
-             //  st' = newHand newDict newCoord
-               
-               //match dict with
-               //|Dict.step word::tail dict when fst = true ->  List chars + extra char. giver korrekt ord
-               //|Dict.step word::tail dict when fst = false -> aux st' snd
-               
-       
-           
-           
-           //|Dict.step word dict -> if false checkForPlaceableWord, look through hand for new char
-           //|Dict.step word dict -> if true remove chars from hand
-           
+     
         //let rec (b, d) = Dict.step c dict
         
-        let rec stepper hand dict (cd: coord) (c: char) =
-            match c with
-            | Dict.step c dict ->
-                Multiset.fold(fun acc  ->
-                    
-                ) hand 
+       
     
     
     
@@ -133,6 +114,29 @@
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
                 //find out what is on the board, look through coords down and right
+                let rec stepper hand dict ((x, y): coord) (c: char) wordSoFar =
+                    match Dict.step c dict with
+                    | Some (b, d) when b = true ->
+                        match Map.find pieces piece with
+                        | tile -> wordSoFar
+                        
+                    | Some (b, d) ->
+                        if then
+                            
+                        else
+                            Multiset.fold (fun acc piece -> 
+                                match Map.find pieces piece with
+                                | (id, (c, pv)) as tile ->
+                                    let res = stepper (MultiSet.removeSingle piece hand) d (x, y-1) c (((x,y-1), tile)::wordSoFar)
+                                    if List.length res > 0 then
+                                        res
+                                    else
+                                        acc
+                            ) [] hand
+                        
+                    | None ->  []
+                
+                
                 let knowAllCoords (hand: st.hand) =
                    
                     Map.fold(fun acc (cd: coord) ->
@@ -146,7 +150,7 @@
                             Map.fold (fun x chars -> 
                                 let writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) (c: char)=
                                     match Map.find cd st.boardWithWords with
-                                    |c -> st.stepper h dict (Map.find c) pieces
+                                    |c -> stepper h dict (Map.find c) pieces
                                     
                                     
                                     
