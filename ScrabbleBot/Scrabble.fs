@@ -78,7 +78,6 @@
             
         // TODO: UPDATE BOARD
         
-        
         //step med givent bogstav og states dict
         // vi får et dict tilbage, som skal bruges
         // fold over hånd og gennem hånden indtil vi får et bogstav vi kan steppe med.
@@ -177,13 +176,36 @@
                                         else
                                             acc
                                     |None -> []
-                             ) [] st.hand
+                             ) [] hand
                          stepDownDict st.hand st.dict Right (0,0) List.empty
-                    else
+                    else // might not be the way to do it
+                        let rec coordRow hand dict dir coord wordSoFar =
+                            match Map.tryFind coord st.boardWithWords with // trying to find out if the current coord is occupied
+                            | Some c -> // tile is occupied proceed from next coord
+                                match Dictionary.step c dict with // stepping with the char we found
+                                | Some (true, dict') ->
+                                    if (Map.tryFind coord st.boardWithWords = Some c) then // if we are still occupied, call the func
+                                        coordRow hand dict' dir (next dir coord) ((coord, tile)::wordSoFar) // call func with wordSofar without touching the hand
+                                    else // shouldn't this be in the none section?
+                                        MultiSet.fold (fun acc brik -> 
+                                            match Map.find brik pieces with
+                                            | (id, (c, pv)) as tile ->
+                                                let res = coordRow (MultiSet.removeSingle brik hand) dict' dir (next dir coord) ((coord, tile)::wordSoFar)
+                                                if List.length res > 0 then
+                                                    res
+                                                else
+                                                    acc
+                                        ) [] hand
+                            | None -> // tile is not occupied
+                                []
+                           
+                        coordRow st.hand st.dict Right (0,0) List.empty // call it with an anchor coord  
+                        // find word from coords: by looking through boardWithWords
+                        // find anchor coords.
                         
                         // findword from many coords and pick the best one
               
-                    findWord st
+                findWord st
                     
                         
                         (*let knowAllCoords hand =
