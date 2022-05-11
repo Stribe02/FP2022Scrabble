@@ -131,19 +131,17 @@
                                 |Some x -> false
                                 |None -> true
                                 
-                        if (checkAvailableUpOfWord (x y)) then
+                        if checkAvailableUpOfWord cd then
                             MultiSet.fold (fun x chars -> 
-                                    let rec writeWordFromAGivenCoord (x,y) (h: st.hand) (dict: Dict) =
-                                        match Map.find cd with
-                                        |Some c -> Dict.step c dict
-                                        
+                                let rec writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) =
+                                    match Map.find cd with
+                                    | c -> Dict.step c dict
                                     
-                                    writeWordFromAGivenCoord (x,y-1) updatedHand
+                                writeWordFromAGivenCoord snd (cd+1) updatedHand
                                     
                                 
-                                ) st.hand                            
-                        
-                        
+                                ) st.hand
+                        else    
                     ) st.boardWithWords
                 
                 
