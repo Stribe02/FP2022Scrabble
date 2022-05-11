@@ -83,9 +83,22 @@
         // fjern bogstav fra hånd, opdateret hånd gives med videre til næste step i dict
         // Abort, hvis vi ikke kan ligge et ord
         // Prøve alle muligheder på hele hånden
-        let rec checkForPlaceableWord ((x,y): coord) (dict: Dict) (word: char) (hand: MultiSet<uint32>) =
-           function
-           Dict.step c::word dict
+        
+        let checkForPlaceableWordDown ((x,y): coord) (dict: Dict) (word: char) (hand: MultiSet<uint32>) =
+           let rec aux st steppedWord updatedHand =       
+               let newCord = (x, y-1)
+
+               st' = newHand newDict newCoord
+               
+               match dict with
+               |Dict.step word::tail dict when fst = true ->  List chars + extra char. giver korrekt ord
+               |Dict.step word::tail dict when fst = false -> aux st' snd
+               
+       
+           
+           
+           //|Dict.step word dict -> if false checkForPlaceableWord, look through hand for new char
+           //|Dict.step word dict -> if true remove chars from hand
     
 
     module Scrabble =
@@ -110,6 +123,29 @@
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
                 //find out what is on the board, look through coords down and right
+                let knowAllCoords =
+                    Map.fold(fun acc (cd: coord) (hand: st.hand) ->
+                        
+                        let checkAvailableUpOfWord ((x,y): coord) =
+                                match (Map.tryFind (x,y+1) st.boardWithWords) with
+                                |Some x -> false
+                                |None -> true
+                                
+                        if (checkAvailableUpOfWord (x y)) then
+                            MultiSet.fold (fun x chars -> 
+                                    let rec writeWordFromAGivenCoord (x,y) (h: st.hand) (dict: Dict) =
+                                        match Map.find cd with
+                                        |Some c -> Dict.step c dict
+                                        
+                                    
+                                    writeWordFromAGivenCoord (x,y-1) updatedHand
+                                    
+                                
+                                ) st.hand                            
+                        
+                        
+                    ) st.boardWithWords
+                
                 
                 let lookThroughCoords =
                     Map.fold (fun acc (spaceImLookingAt: coord) ->
@@ -123,11 +159,10 @@
                             // fjern bogstav fra hånd, opdateret hånd gives med videre til næste step i dict
                             // Abort, hvis vi ikke kan ligge et ord
                             // Prøve alle muligheder på hele hånden
-                        let checkAvailableUpOfWord ((x,y): coord) =
-                                if (Map.tryFind (x,y+1) st.boardWithWords) then false
-                                else true
-                        if (checkAvailableUpOfWord) then State.checkForPlaceableWord spaceImLookingAt st.dict Map.find(spaceImLookingAt) st.hand // help method
-                            
+                        
+                                
+                        if (checkAvailableUpOfWord spaceImLookingAt) then State.checkForPlaceableWordDown spaceImLookingAt st.dict (Map.find(spaceImLookingAt) st.boardWithWords) st.hand// help method
+                        
                             
                         // SECOND CASE: DER LIGGER NOGET OVER BOGSTAVET
                             // 2 muligheder:
@@ -142,6 +177,15 @@
                             // ligger noget på felter
                             // hvis der gør, skal der steppes ligesom CASE 2 2. mulighed
                             // hvis vi ikke kan færdiggøre et ord, find et andet sted og prøve at ligge et ord
+                            
+                                             
+                        let checkAvailableLeftOfWord ((x,y): coord) =
+                                match (Map.tryFind (x-1,y) st.boardWithWords) with
+                                |Some x -> false
+                                |None -> true
+                                
+                        if (checkAvailableLeftOfWord spaceImLookingAt) then State.checkForPlaceableWord spaceImLookingAt st.dict (Map.find(spaceImLookingAt) st.boardWithWords) st.hand // help method
+
                             
                         // GENERAL NOTE: lav hjælpe metoder
                             // hvor de skal have parameterne: coord, dict, word, hånd
