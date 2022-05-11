@@ -52,7 +52,7 @@
 
         type state =
             { board: Parser.board
-              boardWithWords: Map<coord, uint32>
+              boardWithWords: Map<coord, char>
               dict: ScrabbleUtil.Dictionary.Dict
               playerNumber: uint32
               hand: MultiSet.MultiSet<uint32> }
@@ -76,7 +76,9 @@
         let addToHand hand newPieces =
             List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
             
-            
+        // TODO: UPDATE BOARD
+        
+        
         //step med givent bogstav og states dict
         // vi får et dict tilbage, som skal bruges
         // fold over hånd og gennem hånden indtil vi får et bogstav vi kan steppe med.
@@ -94,7 +96,17 @@
 
     module Scrabble =
         open System.Threading
-
+        
+        type dir = Down | Right
+        
+        let next (x, y) dir =
+            match dir with
+            | Right -> (x + 1, y)
+            | Down -> (x, y + 1)
+        // Back : coord -> dir -> coord
+        // turn : dir -> dir
+            
+        
         let playGame cstream pieces (st: State.state) =
 
             let rec aux (st: State.state) =
@@ -112,32 +124,77 @@
 
                 let msg = recv cstream
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-
-                //find out what is on the board, look through coords down and right
-                let rec stepper hand dict ((x, y): coord) (c: char) wordSoFar =
-                    match Dict.step c dict with
-                    | Some (b, d) when b = true ->
-                        match Map.find pieces piece with
-                        | tile -> wordSoFar
+                
+                (* directions and stuff *)
+                
+  
+                 
+                
+             
+                    
+                //stepper down -> used to find words to place vertically (hello nedad)
+                (*let rec stepperDown hand dict (coord: coord) dir wordSoFar =
+                    match Map.tryFind coord st.boardWithWords with
+                    | Some c -> // tile is occupied  proceed from next coord
+                        match Dictionary.step c dict with
+                        | Some (true, dict') ->
+                            if (Map.tryFind coord st.boardWithWords = Some c) then
+                                stepperDown hand dict' (next coord dir) dir wordSoFar
+                            else
+                                MultiSet.fold (fun acc piece -> 
+                                    match Map.find piece hand with
+                                    | (id, (c, pv)) as tile ->
+                                        let res = stepperDown (MultiSet.removeSingle piece hand) d (x, y-1) c (((x,y-1), tile)::wordSoFar)
+                                        if List.length res > 0 then
+                                            res
+                                        else
+                                            acc
+                                ) [] hand
+                                
+                        | None -> []
+                    | None -> []*)
+                    
+                    (*
+                    if (checkLeft coord && checkRight coord) then
+                        match Dictionary.step c dict with
+                        | Some (true, d) ->
+                            match Map.find pieces piece with
+                            | tile -> wordSoFar
+                           *)
+                
                         
-                    | Some (b, d) ->
-                        if then
-                            
-                        else
-                            Multiset.fold (fun acc piece -> 
-                                match Map.find pieces piece with
-                                | (id, (c, pv)) as tile ->
-                                    let res = stepper (MultiSet.removeSingle piece hand) d (x, y-1) c (((x,y-1), tile)::wordSoFar)
-                                    if List.length res > 0 then
-                                        res
-                                    else
-                                        acc
-                            ) [] hand
-                        
-                    | None ->  []
+                let findWord (st: State.state) =
+                    if (Map.isEmpty st.boardWithWords) then
+                         let rec stepDownDict hand dict coord char wordSoFar =
+                             MultiSet.fold( fun acc brik ->
+                                 match Map.find brik pieces with
+                                 | (id, (c, pv)) as tile ->
+                                        let res = stepDownDict (MultiSet.removeSingle brik hand) d (x+1, y) c (((x+1,y), tile)::wordSoFar)
+                                        if List.length res > 0 then
+                                            res
+                                        else
+                                            acc 
+        
+                             ) [] st.hand
+                         stepDownDict 
+                              
+                                    
+                                    
+                                    
+                                    let res = stepperDown (MultiSet.removeSingle piece hand) d (x, y-1) c (((x,y-1), tile)::wordSoFar)
+                                            if List.length res > 0 then
+                                                res
+                                            else
+                                                acc
+                                     | None -> []
+                             
+                         // findword from coord (0,0)
+                    else // findword from many coords and pick the best one
+                
+                    findWord st
                 
                 
-                let knowAllCoords (hand: st.hand) =
+                (*let knowAllCoords hand =
                    
                     Map.fold(fun acc (cd: coord) ->
                         
@@ -148,36 +205,33 @@
                                 
                         if checkAvailableUpOfWord cd then
                             Map.fold (fun x chars -> 
-                                let writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) (c: char)=
+                                let writeWordFromAGivenCoord cd (h: MultiSet<uint32>) (dict: Dict) (c: char)=
                                     match Map.find cd st.boardWithWords with
-                                    |c -> stepper h dict (Map.find c) pieces
-                                    
+                                    |c -> stepperDown h dict (Map.find c) pieces
+                                       
                                     
                                     
                                 writeWordFromAGivenCoord cd hand dict
                                 ) st.boardWithWords
-                            
-                            
-                            
-                            
+                                
                         else
                             let checkAvailableLeftOfWord ((x,y): coord) =
                                 match (Map.tryFind (x-1,y) st.boardWithWords) with
                                 |Some x -> false
                                 |None -> true
                                 
-                        if checkAvailableLeftOfWord cd then
-                            MultiSet.fold (fun x chars -> 
-                                let rec writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) =
-                                    match Map.find cd with
-                                    | c -> Dict.step c dict
+                            if checkAvailableLeftOfWord cd then
+                                MultiSet.fold (fun x chars -> 
+                                    let rec writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) =
+                                        match Map.find cd with
+                                        | c -> Dict.step c dict
+                                        
+                                    writeWordFromAGivenCoord snd (cd+1) updatedHand
+                                        
                                     
-                                writeWordFromAGivenCoord snd (cd+1) updatedHand
+                                    ) st.hand
                                     
-                                
-                                ) st.hand
-                                
-                    ) st.boardWithWords
+                    ) st.boardWithWords*)
 
                 
                 //find out what words you can make in combination with the board
