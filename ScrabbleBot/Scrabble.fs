@@ -175,7 +175,7 @@
                         //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
                         // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
                 let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (dir: dir) =
-                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) (coord: coord)=
+                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
                         MultiSet.fold (fun acc piece _ ->
                             let id, (c, pv) as tile = Map.find piece pieces // Seq.head can be used?
                             let pv = 0 // pointvalue
