@@ -175,21 +175,19 @@
                         //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
                         // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
                 let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (dir: dir) =
-                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
+                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) dir (coord: coord) =
                         MultiSet.fold (fun acc piece _ ->
-                            let id, (c, pv) as tile = Map.find piece pieces // Seq.head can be used?
-                            let pv = 0 // pointvalue
-                            
+                            let id, (c, pv) as brik = Map.find piece pieces // Seq.head can be used?
                             // ((coord, tile)::wordSoFar)
                             match Dictionary.step c dict with // step med char
                             | Some (b, d) ->
-                                let newHand = MultiSet.removeSingle piece // remove char from hand
+                                let newHand = MultiSet.removeSingle piece hand // remove char from hand
                                 if b then
-                                    aux d newHand board ((coord, tile)::wordSoFar)
-                                else aux d newHand board ms coord
+                                    aux d newHand board ((coord, brik)::wordSoFar) dir (next dir coord)
+                                else aux d newHand board ms dir (next dir coord) 
                             | None -> List.Empty    
                             ) List.Empty hand
-                    aux st.dict st.hand st.boardWithWords move Right (next Right)
+                    aux st.dict st.hand st.boardWithWords move Right (next Right (0,0))
                     // firstmove returns st' 
                 
                 
@@ -234,46 +232,6 @@
                 // addToBoard: move +
                 
                 // når man har lavet successful play
-                // 
-                       
-                        (*let knowAllCoords hand =
-                           
-                            Map.fold(fun acc (cd: coord) ->
-                                
-                                let checkAvailableUpOfWord ((x,y): coord) =
-                                    match (Map.tryFind (x,y+1) st.boardWithWords) with
-                                    |Some x -> false
-                                    |None -> true
-                                        
-                                if checkAvailableUpOfWord cd then
-                                    Map.fold (fun x chars -> 
-                                        let writeWordFromAGivenCoord cd (h: MultiSet<uint32>) (dict: Dict) (c: char)=
-                                            match Map.find cd st.boardWithWords with
-                                            |c -> stepperDown h dict (Map.find c) pieces
-                                               
-                                            
-                                            
-                                        writeWordFromAGivenCoord cd hand dict
-                                        ) st.boardWithWords
-                                        
-                                else
-                                    let checkAvailableLeftOfWord ((x,y): coord) =
-                                        match (Map.tryFind (x-1,y) st.boardWithWords) with
-                                        |Some x -> false
-                                        |None -> true
-                                        
-                                    if checkAvailableLeftOfWord cd then
-                                        MultiSet.fold (fun x chars -> 
-                                            let rec writeWordFromAGivenCoord cd (h: st.hand) (dict: Dict) =
-                                                match Map.find cd with
-                                                | c -> Dict.step c dict
-                                                
-                                            writeWordFromAGivenCoord snd (cd+1) updatedHand
-                                                
-                                            
-                                            ) st.hand
-                                            
-                            ) st.boardWithWords*)
 
                         
                         //find out what words you can make in combination with the board
