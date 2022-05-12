@@ -161,17 +161,48 @@
                             | tile -> wordSoFar
                            *)
                 
-                        
-                (*
-                let findWord (st: State.state) =
+                // first move    
+                // folde over hånden
+                // finder char id i pieces
+                        // finde ud af hvilken vej vi skal gå (højre)
+                        // step i dict med char vi fandt
+                        // fjerne char fra hånd
+                        // matcher step option med some -> concat til wordsofar - ord listen
+                        // hvis bool er true - ord er slut - smæk det bag på - kald inner (aux)
+                        // if not - kalder funktionen - uden at proppe et ord med
+                        // @ - add
+                        // word so far should look like the moves set
+                        //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
+                        // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
+                let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (dir: dir) =
+                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) =
+                        MultiSet.fold (fun acc piece _ ->
+                            let c = Map.find piece pieces // Seq.head can be used?
+                            let pv = 0 // pointvalue
+                            let coord = Right// trying to move in a direction
+                            
+                            match Dictionary.step c dict with // step med char
+                            | Some (b, d) ->
+                                let newHand = MultiSet.removeSingle piece // remove char from hand
+                                if b then
+                                    aux d newHand board ms::((coord), (piece, c, pv))
+                                else aux d newHand board ms coord
+                            | None -> List.Empty    
+                            ) List.Empty hand
+                    aux st.dict st.hand st.boardWithWords move Right (0,0)
+             
+
+                
+                // build words:     
+                (*let findWord (st: State.state)  =
                     //starting with an empty board. This is the first move
                     if (Map.isEmpty st.boardWithWords) then        
-                         let rec stepDownDict hand (dict: Dict) (dir: dir) (coord: coord) wordSoFar =
+                         let rec stepDownDict hand (dict: Dict) (dir: dir) (coord: coord) (wordSoFar : ((int * int) * (uint32 * (char * int))) list) : ((int * int) * (uint32 * (char * int))) list =
                              //look through your hand
                              MultiSet.fold (fun acc brik ->
                                  //find the char from the uint in your hand
                                  match Map.find brik pieces with
-                                 | (id, (c, pv)) as tile ->
+                                 | id, (c, pv) as tile ->
                                     //use the char to step in the dict
                                     match Dictionary.step c dict with
                                     | Some (b, d) ->
@@ -187,7 +218,7 @@
                                     | None -> []        
                              ) [] hand
                          stepDownDict st.hand st.dict Right (0,0) List.empty
-                    *)
+                findWord st    *)
                     //else // stuff is on the board:
                         
                         
@@ -195,19 +226,6 @@
               
                 //findWord st
                 
-                        // first move    
-                // folde over hånden
-                // finder char id i pieces
-                        // finde ud af hvilken vej vi skal gå (høje)
-                        // step i dict med char vi fandt
-                        // fjerne char fra hånd
-                        // matcher step option med some -> concat til wordsofar - ord listen
-                        // hvis bool er true - ord er slut - smæk det bag på - kald inner (aux)
-                        // if not - kalder funktionen - uden at proppe et ord med
-                        // @ - add
-                // word so far should look like the moves set
-                let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) =
-                        let rec aux = // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
                         
                        
                 // addToBoard: move +
@@ -278,6 +296,7 @@
                             (fun acc (coord, (tileNumber, (aChar, _))) -> Map.add coord aChar acc)
                             st.boardWithWords
                             moves
+                    //        
 
                     let st' =
                         State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand
