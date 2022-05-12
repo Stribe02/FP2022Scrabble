@@ -131,8 +131,8 @@
                 let msg = recv cstream
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
    
-                (*//stepper down -> used to find words to place vertically (hello nedad)
-                let rec stepperDown hand dict (coord: coord) dir wordSoFar =
+                //stepper down -> used to find words to place vertically (hello nedad)
+                (*let rec stepperDown hand dict (coord: coord) dir wordSoFar =
                     match Map.tryFind coord st.boardWithWords with
                     | Some c -> // tile is occupied  proceed from next coord
                         match Dictionary.step c dict with
@@ -151,9 +151,8 @@
                                 ) [] hand
                                 
                         | None -> []
-                    | None -> []
-                    *)
-
+                    | None -> []*)
+                    
                     (*
                     if (checkLeft coord && checkRight coord) then
                         match Dictionary.step c dict with
