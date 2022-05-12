@@ -76,9 +76,16 @@
         let addToHand hand newPieces =
             List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
             
-        // TODO: UPDATE BOARD
         
+        // fold over listen man får af CMSuccess - ms, som er moves - add to Map af board = boardsWithWords.
+        let updateBoard (ms: ((int * int) * (uint32 * (char * int))) list) (st: state) : state=
+            let piecesOnBoard = List.fold (fun acc ((x, y), (_, (letter, _))) -> Map.add (x, y) letter acc) st.boardWithWords ms
+                // mkState - med alt i statet
+            let st' = mkState st.board piecesOnBoard st.dict st.playerNumber st.hand
+            st'
+        // add playerPoints - ellers ligge vi det ikke til
         
+            
         //step med givent bogstav og states dict
         // vi får et dict tilbage, som skal bruges
         // fold over hånd og gennem hånden indtil vi får et bogstav vi kan steppe med.
@@ -124,8 +131,8 @@
                 let msg = recv cstream
                 debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
    
-                //stepper down -> used to find words to place vertically (hello nedad)
-                (*let rec stepperDown hand dict (coord: coord) dir wordSoFar =
+                (*//stepper down -> used to find words to place vertically (hello nedad)
+                let rec stepperDown hand dict (coord: coord) dir wordSoFar =
                     match Map.tryFind coord st.boardWithWords with
                     | Some c -> // tile is occupied  proceed from next coord
                         match Dictionary.step c dict with
@@ -144,8 +151,9 @@
                                 ) [] hand
                                 
                         | None -> []
-                    | None -> []*)
-                    
+                    | None -> []
+                    *)
+
                     (*
                     if (checkLeft coord && checkRight coord) then
                         match Dictionary.step c dict with
@@ -155,37 +163,59 @@
                            *)
                 
                         
+                (*
                 let findWord (st: State.state) =
                     //starting with an empty board. This is the first move
                     if (Map.isEmpty st.boardWithWords) then        
-                         let rec stepDownDict hand dict dir coord wordSoFar =
-                             //look through your hands
+                         let rec stepDownDict hand (dict: Dict) (dir: dir) (coord: coord) wordSoFar =
+                             //look through your hand
                              MultiSet.fold (fun acc brik ->
                                  //find the char from the uint in your hand
                                  match Map.find brik pieces with
                                  | (id, (c, pv)) as tile ->
                                     //use the char to step in the dict
-                                    match step c dict with
-                                    |Some (b, d) ->
+                                    match Dictionary.step c dict with
+                                    | Some (b, d) ->
                                         //define recursive call with new hand and the tile to the right, add coord + tile to list
                                         let result = stepDownDict (MultiSet.removeSingle brik hand) d dir (next dir coord) ((coord, tile)::wordSoFar)
                                         //result has not yet been called here, how can it have a length?
                                         if List.length result > 0 then
-                                            //is the method result called or do we return the list that is result?
-                                            //should wordSoFar be returned at some point?
+                                        //is the method result called or do we return the list that is result?
+                                        //should wordSoFar be returned at some point?
                                             result
                                         else
                                             acc
-                                    |None -> []
-                             ) [] st.hand
+                                    | None -> []        
+                             ) [] hand
                          stepDownDict st.hand st.dict Right (0,0) List.empty
-                    else
+                    *)
+                    //else // stuff is on the board:
+                        
                         
                         // findword from many coords and pick the best one
               
-                    findWord st
-                    
+                //findWord st
+                
+                        // first move    
+                // folde over hånden
+                // finder char id i pieces
+                        // finde ud af hvilken vej vi skal gå (høje)
+                        // step i dict med char vi fandt
+                        // fjerne char fra hånd
+                        // matcher step option med some -> concat til wordsofar - ord listen
+                        // hvis bool er true - ord er slut - smæk det bag på - kald inner (aux)
+                        // if not - kalder funktionen - uden at proppe et ord med
+                        // @ - add
+                // word so far should look like the moves set
+                let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) =
+                        let rec aux = // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
                         
+                       
+                // addToBoard: move +
+                
+                // når man har lavet successful play
+                // 
+                       
                         (*let knowAllCoords hand =
                            
                             Map.fold(fun acc (cd: coord) ->
