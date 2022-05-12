@@ -175,21 +175,24 @@
                         //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
                         // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
                 let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (dir: dir) =
-                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) =
+                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) (coord: coord)=
                         MultiSet.fold (fun acc piece _ ->
-                            let c = Map.find piece pieces // Seq.head can be used?
+                            let id, (c, pv) as tile = Map.find piece pieces // Seq.head can be used?
                             let pv = 0 // pointvalue
-                            let coord = Right// trying to move in a direction
                             
+                            // ((coord, tile)::wordSoFar)
                             match Dictionary.step c dict with // step med char
                             | Some (b, d) ->
                                 let newHand = MultiSet.removeSingle piece // remove char from hand
                                 if b then
-                                    aux d newHand board ms::((coord), (piece, c, pv))
+                                    aux d newHand board ((coord, tile)::wordSoFar)
                                 else aux d newHand board ms coord
                             | None -> List.Empty    
                             ) List.Empty hand
-                    aux st.dict st.hand st.boardWithWords move Right (0,0)
+                    aux st.dict st.hand st.boardWithWords move Right (next Right)
+                    // firstmove returns st' 
+                
+                
              
 
                 
