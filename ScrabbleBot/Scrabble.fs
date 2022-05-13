@@ -112,6 +112,40 @@
             | Down -> (x,y+1)
             | Left  -> (x-1, y)
             | Right  -> (x+1,y)
+            
+                // first move    
+        // folde over hånden
+        // finder char id i pieces
+                // finde ud af hvilken vej vi skal gå (højre)
+                // step i dict med char vi fandt
+                // fjerne char fra hånd
+                // matcher step option med some -> concat til wordsofar - ord listen
+                // hvis bool er true - ord er slut - smæk det bag på - kald inner (aux)
+                // if not - kalder funktionen - uden at proppe et ord med
+                // @ - add
+                // word so far should look like the moves set
+                //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
+                // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
+        
+        // bygger ordet op som liste - hvor hvert element er coord * uint32 * (char * int))
+        // Når vi så tjekker i det dict vi stepper ned i tilføjer vi det til listen.
+        // bagefter, Så ser vi om booleanen er true eller false, om det completer et ord eller ej,
+        // hvis ja, så tager vi den liste som vi har bygget på og smider den ind i vores liste af ord
+        let firstmove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32,tile>) =
+            let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (pieces: Map<uint32,tile>) (ms: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) : ((int * int) * (uint32 * (char * int))) list list =
+                MultiSet.fold (fun acc piece _ ->
+                    let (id, (c, pv)) as brik = Map.find piece pieces // Seq.head can be used?
+                    // ((coord, tile)::wordSoFar)
+                    match Dictionary.step c dict with // step med char
+                    | Some (b, d) ->
+                        let newHand = MultiSet.removeSingle piece hand // remove char from hand
+                        if b then
+                            aux d newHand board pieces ((coord, brik)::ms) dir (next dir coord)
+                        else aux d newHand board pieces ms dir (next dir coord) 
+                    | None -> List.Empty    
+                    ) List.Empty hand
+            aux st.dict st.hand st.boardWithWords pieces wordSoFar Right (next Right (0,0))
+                //firstmove returns st'    
     
         let playGame cstream pieces (st: State.state) =
 
@@ -160,36 +194,10 @@
                             match Map.find pieces piece with
                             | tile -> wordSoFar
                            *)
-                
-                // first move    
-                // folde over hånden
-                // finder char id i pieces
-                        // finde ud af hvilken vej vi skal gå (højre)
-                        // step i dict med char vi fandt
-                        // fjerne char fra hånd
-                        // matcher step option med some -> concat til wordsofar - ord listen
-                        // hvis bool er true - ord er slut - smæk det bag på - kald inner (aux)
-                        // if not - kalder funktionen - uden at proppe et ord med
-                        // @ - add
-                        // word so far should look like the moves set
-                        //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
-                        // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
-                let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (dir: dir) =
-                    let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (ms: List<(int * int) * (uint32 * (char * int))>) dir (coord: coord) =
-                        MultiSet.fold (fun acc piece _ ->
-                            let id, (c, pv) as brik = Map.find piece pieces // Seq.head can be used?
-                            // ((coord, tile)::wordSoFar)
-                            match Dictionary.step c dict with // step med char
-                            | Some (b, d) ->
-                                let newHand = MultiSet.removeSingle piece hand // remove char from hand
-                                if b then
-                                    aux d newHand board ((coord, brik)::wordSoFar) dir (next dir coord)
-                                else aux d newHand board ms dir (next dir coord) 
-                            | None -> List.Empty    
-                            ) List.Empty hand
-                    aux st.dict st.hand st.boardWithWords move Right (next Right (0,0))
-                    // firstmove returns st' 
-                
+               
+                let findMove =
+                    if (Map.isEmpty st.boardWithWords) then
+                        firstmove
                 
              
 
