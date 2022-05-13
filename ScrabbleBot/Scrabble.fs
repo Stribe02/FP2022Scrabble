@@ -1,6 +1,7 @@
 ﻿namespace Wordfeud
 
 open System
+open System.Collections.Generic
 open MultiSet
 open Parser
 open ScrabbleUtil
@@ -167,12 +168,44 @@ module Scrabble =
                 word
                 
         ) List.Empty words
-    (*
+    
 
     let findMove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32, 'a>) (coord: coord) =
         let rec inner (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (pis: Map<uint32, 'a>) (mov: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) =
-             let ch = Map.find piece pis |> fst // getting the char as it's the first in the set
-             let pv = Map.find piece pis |> snd // pv second in the set: tile = Set<char*int>*)
+            MultiSet.fold (fun acc piece _ ->
+                let c = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
+                let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
+                            
+                let newHand = MultiSet.removeSingle piece hand // remove char from hand
+                 
+                Map.fold(fun acc cd ->
+                    let checkAvailableUpFromCoord cd =
+                       match (Map.tryFind (next Up cd) st.boardWithWords) with
+                       |Some c -> false
+                       |None -> true
+                            
+                    if checkAvailableUpFromCoord cd then
+                       
+                       let rec writeWordFromCoord =
+                           match Map.find cd st.boardWithWords with
+                           |c ->
+                               match Dictionary.step c dict with
+                               |Some (b,d) ->
+                                   let letter = cd, (piece, (c, pv))
+                                   let wordSoFar = (mov@[letter])
+                                    
+                                   if b = true then
+                                       wordSoFar::acc@(writeWordFromCoord)
+                                   else
+                                       acc@(writeWordFromCoord)
+                       writeWordFromCoord
+                    else
+                       failwith "xxx"
+                       
+               
+                ) acc st.boardWithWords
+            ) List.Empty hand
+        inner st.dict st.hand st.boardWithWords pieces List.empty Down (-1,0)
              
              
              
