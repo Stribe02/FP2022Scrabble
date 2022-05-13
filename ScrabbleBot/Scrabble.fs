@@ -5,6 +5,7 @@ open System.Collections.Generic
 open MultiSet
 open Parser
 open ScrabbleUtil
+open ScrabbleUtil
 open ScrabbleUtil.Dictionary
 open ScrabbleUtil.ServerCommunication
 
@@ -134,7 +135,13 @@ module Scrabble =
     // hvis ja, så tager vi den liste som vi har bygget på og smider den ind i vores liste af ord
     
     // pieces burde være et Map<uint32,tile>, hvor tile er et Set<char*int>
-    let firstmove (st: State.state) (pieces: Map<uint32, 'a>) =
+    
+    let checkAvailableDirFromCoord cd dir (st: State.state) =
+        match (Map.tryFind (next dir cd) st.boardWithWords) with
+        |Some c -> false
+        |None -> true
+        
+    let firstMove (st: State.state) (pieces: Map<uint32, 'a>) dir =
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
             MultiSet.fold (fun acc piece _ ->
                 // getting char and pv out of pieces
@@ -159,6 +166,44 @@ module Scrabble =
             ) List.Empty hand
             
         aux st.dict st.hand st.boardWithWords List.empty (-1,0)
+        
+        
+(*    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) dir  =
+        let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
+            let tryWord dir =
+                MultiSet.fold (fun acc piece _ ->
+                    let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
+                    let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
+                    let cord = next dir coord
+                     
+                    let newHand = MultiSet.removeSingle piece hand // remove char from hand
+                   
+                    match Dictionary.step ch dict with // step med char
+                    | Some (b, d) ->
+                        let letter = cord, (piece, (ch,pv))
+                        let wordSofar = (mov@[letter])
+                               
+                        if b = true then
+                            wordSofar::acc@(aux d newHand board wordSofar cord)
+                        else
+                            acc@(aux d newHand board wordSofar cord)
+                            
+                    | None -> acc
+                    
+                ) List.Empty hand
+
+            Map.fold(fun x cds ->
+                if (checkAvailableDirFromCoord cds Up st) then
+                
+                      
+                  tryWord Down
+                else if (checkAvailableDirFromCoord cds Left st) then
+                  tryWord Right
+                else []
+            
+            ) List.empty st.boardWithWords
+ 
+        aux st.dict st.hand st.boardWithWords List.empty (0,0)*)
     
     let longestWord (words: ((int * int) * (uint32 * (char * int))) list list) =
         List.fold(fun bestWord word ->
@@ -168,52 +213,7 @@ module Scrabble =
                 word
                 
         ) List.Empty words
-    
 
-    let findMove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32, 'a>) (coord: coord) =
-        let rec inner (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (pis: Map<uint32, 'a>) (mov: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) =
-            MultiSet.fold (fun acc piece _ ->
-                let c = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
-                let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
-                            
-                let newHand = MultiSet.removeSingle piece hand // remove char from hand
-                 
-                Map.fold(fun acc cd ->
-                    let checkAvailableUpFromCoord cd =
-                       match (Map.tryFind (next Up cd) st.boardWithWords) with
-                       |Some c -> false
-                       |None -> true
-                            
-                    if checkAvailableUpFromCoord cd then
-                       
-                       let rec writeWordFromCoord =
-                           match Map.find cd st.boardWithWords with
-                           |c ->
-                               match Dictionary.step c dict with
-                               |Some (b,d) ->
-                                   let letter = cd, (piece, (c, pv))
-                                   let wordSoFar = (mov@[letter])
-                                    
-                                   if b = true then
-                                       wordSoFar::acc@(writeWordFromCoord)
-                                   else
-                                       acc@(writeWordFromCoord)
-                       writeWordFromCoord
-                    else
-                       failwith "xxx"
-                       
-               
-                ) acc st.boardWithWords
-            ) List.Empty hand
-        inner st.dict st.hand st.boardWithWords pieces List.empty Down (-1,0)
-             
-             
-             
-             
-             
-             
-        
-    // when method above works, make one with more coords
         
     
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
@@ -233,8 +233,9 @@ module Scrabble =
 
             let findMove =
                 if (Map.isEmpty st.boardWithWords) then
-                    firstmove st pieces
-                else failwith "not implemented"
+                    firstMove st pieces Right
+                else
+                    generalMove st pieces Down
             
             let wordMove = longestWord findMove  
             let playMove =
