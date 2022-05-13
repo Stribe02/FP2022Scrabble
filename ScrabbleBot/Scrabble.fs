@@ -127,7 +127,7 @@
                 //let firstmove (st: State.state) (wordSoFar: List<(int * int) * (uint32 * (char * int))>) (coord: coord) =
                 // dict, hand, board, movet man er i gang med at lave, som er listen, coordset
         
-        // bygger ordet op som liste - hvor hvert element er coord * uint32 * (char * int))
+        // bygger ordet op som liste - hvor hvert element er (coord * uint32 * (char * int)) - dvs ((int * int) * uint32 * (char * int))
         // Når vi så tjekker i det dict vi stepper ned i tilføjer vi det til listen.
         // bagefter, Så ser vi om booleanen er true eller false, om det completer et ord eller ej,
         // hvis ja, så tager vi den liste som vi har bygget på og smider den ind i vores liste af ord
