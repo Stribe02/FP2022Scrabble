@@ -134,7 +134,7 @@ module Scrabble =
     
     // pieces burde være et Map<uint32,tile>, hvor tile er et Set<char*int>
     let firstmove (st: State.state) (pieces: Map<uint32, 'a>) =
-        let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: (coord * (uint32 * (char * int))) list) (coord: coord) =
+        let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
             MultiSet.fold (fun acc piece _ ->
                 // getting char and pv out of pieces
                 let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
@@ -145,7 +145,8 @@ module Scrabble =
                
                 match Dictionary.step ch dict with // step med char
                 | Some (b, d) ->
-                    let wordSofar = (mov@[cord, (piece, (ch,pv))])
+                    let letter = cord, (piece, (ch,pv))
+                    let wordSofar = (mov@[letter])
                     
                     if b = true then
                         wordSofar::acc@(aux d newHand board wordSofar cord)
@@ -158,6 +159,14 @@ module Scrabble =
             
         aux st.dict st.hand st.boardWithWords List.empty (-1,0)
     
+    let longestWord (words: ((int * int) * (uint32 * (char * int))) list list) =
+        List.fold(fun bestWord word ->
+            if List.length bestWord > List.length word then
+                bestWord
+            else
+                word
+                
+        ) List.Empty words
     (*
 
     let findMove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32, 'a>) (coord: coord) =
@@ -194,7 +203,7 @@ module Scrabble =
                     firstmove st pieces
                 else failwith "not implemented"
             
-            let wordMove = findMove.Head   
+            let wordMove = longestWord findMove  
             let playMove =
                 match findMove with
                 |[] -> send cstream SMPass
