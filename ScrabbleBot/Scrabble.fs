@@ -148,7 +148,7 @@
                     | None -> List.Empty    
                     ) List.Empty hand
             aux st.dict st.hand st.boardWithWords pieces wordSoFar Right (next Right (0,0))
-                //firstmove returns st'
+                //firstmove returns this: (int * int) * uint32 * (char * int)) list list - gør det til en liste af ord man kan lægge ned
         
         // when method above works, make one with more coords  
     
