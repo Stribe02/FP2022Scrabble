@@ -134,28 +134,29 @@ module Scrabble =
     
     // pieces burde være et Map<uint32,tile>, hvor tile er et Set<char*int>
     let firstmove (st: State.state) (pieces: Map<uint32, 'a>) =
-        let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) =
+        let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: (coord * (uint32 * (char * int))) list) (coord: coord) =
             MultiSet.fold (fun acc piece _ ->
                 // getting char and pv out of pieces
                 let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
                 let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
                 let cord = next Right coord
+                
+                let newHand = MultiSet.removeSingle piece hand // remove char from hand
                
                 match Dictionary.step ch dict with // step med char
                 | Some (b, d) ->
-                    let newHand = MultiSet.removeSingle piece hand // remove char from hand
-                    let newLetter = (coord, (piece, (ch, pv)))::mov
+                    let wordSofar = (mov@[cord, (piece, (ch,pv))])
                     
                     if b = true then
-                        newLetter::acc@(aux d newHand board  newLetter dir cord)
+                        wordSofar::acc@(aux d newHand board wordSofar cord)
                     else
-                        acc@(aux d newHand board  newLetter dir cord)
+                        acc@(aux d newHand board wordSofar cord)
                         
                 | None -> acc
                 
-                ) List.Empty hand
+            ) List.Empty hand
             
-        aux st.dict st.hand st.boardWithWords List.empty Right (0,0)
+        aux st.dict st.hand st.boardWithWords List.empty (-1,0)
     
     (*
 
@@ -186,18 +187,20 @@ module Scrabble =
             let move = RegEx.parseMove input
 
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-            send cstream (SMPlay move)
+            //send cstream (SMPlay move)
 
             let findMove =
                 if (Map.isEmpty st.boardWithWords) then
                     firstmove st pieces
                 else failwith "not implemented"
-                
+            
+            let wordMove = findMove.Head   
             let playMove =
                 match findMove with
-                |[] -> send cstream (SMPass)
-                |_ -> send cstream (SMPlay move)
-            
+                |[] -> send cstream SMPass
+                |_ -> send cstream (SMPlay wordMove)
+           
+            playMove
             let msg = recv cstream
             debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
 
