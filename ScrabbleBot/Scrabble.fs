@@ -133,24 +133,26 @@
         // hvis ja, så tager vi den liste som vi har bygget på og smider den ind i vores liste af ord
         
         // pieces burde være et Map<uint32,tile>, hvor tile er et Set<char*int>
-        let firstmove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32,'a>) =
-            let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (pis: Map<uint32,'a>) (ms: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) : ((int * int) * (uint32 * (char * int))) list list =
+        let firstmove (st: State.state) (wordSoFar: ((int * int) * (uint32 * (char * int))) list) (dir: dir) (pieces: Map<uint32, 'a>) =
+            let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (pis: Map<uint32, 'a>) (ms: ((int * int) * (uint32 * (char * int))) list) dir (coord: coord) : ((int * int) * (uint32 * (char * int))) list list =
                 MultiSet.fold (fun acc piece _ ->
-                    let (id, (c, pv)) as tile = Map.find piece pis // Seq.head can be used?
-                    // ((coord, tile)::wordSoFar)
-                    // 
-                    match Dictionary.step c dict with // step med char
+                    // getting char and pv out of pieces
+                    let ch = Map.find piece pis |> fst // getting the char as it's the first in the set
+                    let pv = Map.find piece pis |> snd // pv second in the set: tile = Set<char*int>
+                   
+                    match Dictionary.step ch dict with // step med char
                     | Some (b, d) ->
                         let newHand = MultiSet.removeSingle piece hand // remove char from hand
                         if b then
-                            aux d newHand board pis ((coord, tile)::ms) dir (next dir coord)
+                            aux d newHand board pis ((coord, (ch, pv)::ms)) dir (next dir coord) // how we add is probably wrong
                         else aux d newHand board pis ms dir (next dir coord) 
                     | None -> List.Empty    
                     ) List.Empty hand
             aux st.dict st.hand st.boardWithWords pieces wordSoFar Right (next Right (0,0))
                 //firstmove returns this: (int * int) * uint32 * (char * int)) list list - gør det til en liste af ord man kan lægge ned
         
-        // when method above works, make one with more coords  
+        // when method above works, make one with more coords
+        
     
         let playGame cstream pieces (st: State.state) =
 
