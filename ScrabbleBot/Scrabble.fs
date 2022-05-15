@@ -86,24 +86,6 @@ module State =
         let st' = mkState st.board piecesOnBoard st.dict st.playerNumber st.hand
         st'
     // add playerPoints - ellers ligge vi det ikke til
-   
-        
-        //MultiSet.fold(fun acc (piece: uint32) _ ->
-        //    piece::acc
-        //) List.empty hand
-        
-    
-        
-        
-    //step med givent bogstav og states dict
-    // vi får et dict tilbage, som skal bruges
-    // fold over hånd og gennem hånden indtil vi får et bogstav vi kan steppe med.
-    // fjern bogstav fra hånd, opdateret hånd gives med videre til næste step i dict
-    // Abort, hvis vi ikke kan ligge et ord
-    // Prøve alle muligheder på hele hånden
-    
- 
-    //let rec (b, d) = Dict.step c dict
     
    
 
@@ -276,16 +258,11 @@ module Scrabble =
                 let addedToHand =
                     State.addToHand removedFromHand newPieces
 
-                // løbe igennem alle bogstaver der er lagt
-                // hvordan får vi infomationer om tilen til uint - hvordan ved vi hvilket bogstav det er
-                // 1. hold styr på bogstaver
-
                 let boardWithNewWordAdded =
                     List.fold
                         (fun acc (coord, (tileNumber, (aChar, _))) -> Map.add coord aChar acc)
                         st.boardWithWords
-                        moves
-                //        
+                        moves      
 
                 let st' =
                     State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand
@@ -321,7 +298,21 @@ module Scrabble =
                     State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber st.hand
 
                 aux st'
-
+            | RCM (CMChange(playerId, numberOfTiles)) ->
+                // Other player successfully changed pieces
+                // st.hand
+                let emptyHand = MultiSet.empty
+                
+                let st' =
+                    State.mkState st.board st.boardWithWords st.dict st.playerNumber emptyHand
+                aux st'    
+            | RCM (CMChangeSuccess(newTiles)) ->
+                // we have successfully changed pieces
+                let emptyHand = MultiSet.empty
+                let newHand = State.addToHand emptyHand newTiles    
+                let st' =
+                    State.mkState st.board st.boardWithWords st.dict st.playerNumber newHand
+                aux st'    
             | RCM (CMGameOver _) -> ()
 
             | RCM a -> failwith (sprintf "not implmented: %A" a)
