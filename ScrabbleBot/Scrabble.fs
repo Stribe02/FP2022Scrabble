@@ -123,7 +123,7 @@ module Scrabble =
         |Some c -> false
         |None -> true
         
-    let firstMove (st: State.state) (pieces: Map<uint32, 'a>) dir =
+    let firstMove (counter: int) (st: State.state) (pieces: Map<uint32, 'a>) dir =
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
             MultiSet.fold (fun acc piece _ ->
                 // getting char and pv out of pieces
@@ -159,9 +159,12 @@ module Scrabble =
  
             
     
-    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) dir (coord: coord) =
+    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) (dir: dir) (coord: coord) =
+   
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
+            
             MultiSet.fold (fun acc piece _ ->
+               
                 let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
                 let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
                 //let cord = next dir coord
@@ -181,12 +184,18 @@ module Scrabble =
                         let wordSoFar = (mov@[letter])
                                
                         if b = true then
-                            wordSoFar::acc@(aux d newHand board wordSoFar (next dir coord))
+                            wordSoFar::acc@(aux  d newHand board wordSoFar (next dir coord))
                         else
-                            acc@(aux d newHand board wordSoFar (next dir coord))    
+                            acc@(aux  d newHand board wordSoFar (next dir coord))    
                     | None -> acc
             ) List.Empty hand
-
+//        if (dire = Right) then
+//            let turn = turnBetweenDownAndRight dire
+//            aux turn st.dict st.hand st.boardWithWords List.empty coord
+//        else
+//            let turn = dire
+//            aux turn st.dict st.hand st.boardWithWords List.empty coord
+       
         aux st.dict st.hand st.boardWithWords List.empty coord
         
     
@@ -210,16 +219,25 @@ module Scrabble =
             | None -> acc
         )coord st.boardWithWords
         
-    let mapMove (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) dir (coord: coord) =
+    let mapMove (counter: int) (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) dir (coord: coord) =
         // check for words one way (Right or Down)
         let coordsToStartWith = findMostDirectionalMove st pieces (switchDir dir) coord
-        let moveOneDirection = generalMove st pieces (turnBetweenDownAndRight dir) coordsToStartWith
+        //let moveOneDirection =
+        generalMove st pieces dir coordsToStartWith
+        
         // check for words other way (Down or Right)
         // if we do this, it might try to place "FANNEDOUTLAY", so it tries to places outlay after the d - fanned, which was first move
-        let coordsToStartWithSnd = findMostDirectionalMove st pieces dir coord
+        
+        
+        (*let coordsToStartWithSnd = findMostDirectionalMove st pieces dir coord
         let moveAnotherDirection = generalMove st pieces dir coordsToStartWithSnd
         let moveList = moveOneDirection@moveAnotherDirection
-        moveList
+        moveList*)
+        
+    let mutable i = 1
+    let X() =
+        i <- i + 1
+        i
             
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
 
@@ -238,11 +256,20 @@ module Scrabble =
 
             let tilesToChange = MultiSet.toList st.hand
             
+            
+            
             let findMove =
+               
                 if (Map.isEmpty st.boardWithWords) then
-                    firstMove st pieces Right
+                    firstMove (X()) st pieces Right
+                    
                 else
-                    mapMove st pieces st.boardWithWords Right (0,0)
+                    if (i % 2 = 0) then
+                        mapMove (X()) st pieces st.boardWithWords Down (0,0)
+                        
+                    else
+                        mapMove (X()) st pieces st.boardWithWords Right (0,0)
+                        
             
             let wordMove = longestWord findMove  
             let playMove =
