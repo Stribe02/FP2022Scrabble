@@ -114,6 +114,13 @@ module Scrabble =
         | Down -> (x,y+1)
         | Left  -> (x-1, y)
         | Right  -> (x+1,y)
+    
+    let assignWildcardUintValue ch =
+        if ch = '?' then 0u
+        else uint32(System.Char.ToUpper(ch)) - 64u
+            
+    let isWildcardInHand hand =
+        MultiSet.contains 0u hand
         
             // first move    
     // folde over hånden
@@ -213,9 +220,8 @@ module Scrabble =
                 word
                 
         ) List.Empty words
-
         
-    
+            
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
 
         let rec aux (st: State.state) =
