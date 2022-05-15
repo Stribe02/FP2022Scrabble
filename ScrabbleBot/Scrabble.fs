@@ -86,7 +86,14 @@ module State =
         let st' = mkState st.board piecesOnBoard st.dict st.playerNumber st.hand
         st'
     // add playerPoints - ellers ligge vi det ikke til
+   
+        
+        //MultiSet.fold(fun acc (piece: uint32) _ ->
+        //    piece::acc
+        //) List.empty hand
+        
     
+        
         
     //step med givent bogstav og states dict
     // vi får et dict tilbage, som skal bruges
@@ -114,13 +121,6 @@ module Scrabble =
         | Down -> (x,y+1)
         | Left  -> (x-1, y)
         | Right  -> (x+1,y)
-    
-    let assignWildcardUintValue ch =
-        if ch = '?' then 0u
-        else uint32(System.Char.ToUpper(ch)) - 64u
-            
-    let isWildcardInHand hand =
-        MultiSet.contains 0u hand
         
             // first move    
     // folde over hånden
@@ -143,6 +143,8 @@ module Scrabble =
     
     // pieces burde være et Map<uint32,tile>, hvor tile er et Set<char*int>
     
+        
+        
     let checkAvailableDirFromCoord cd dir (st: State.state) =
         match (Map.tryFind (next dir cd) st.boardWithWords) with
         |Some c -> false
@@ -181,11 +183,7 @@ module Scrabble =
  *)
     // helper method calling on generalMove
     // checke
-    let mapMove (st: State.state) (board: Map<coord, char>) dir (coord: coord) =
-        Map.fold(fun acc word ->
-            checkAvailableDirFromCoord coord dir
-            
-            ) Map.empty board
+ 
             
     
     let generalMove (st: State.state) (pieces: Map<uint32, 'a>) dir (coord: coord) =
@@ -217,6 +215,7 @@ module Scrabble =
             ) List.Empty hand
 
         aux st.dict st.hand st.boardWithWords List.empty coord
+        
     
     let longestWord (words: ((int * int) * (uint32 * (char * int))) list list) =
         List.fold(fun bestWord word ->
@@ -227,6 +226,19 @@ module Scrabble =
                 
         ) List.Empty words
         
+    let mapMove (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) (coord: coord) =
+        Map.fold(fun acc coord ->
+            
+            if (checkAvailableDirFromCoord coord Up st = false) then
+                generalMove st pieces Down coord
+                
+            else
+                if (checkAvailableDirFromCoord coord Left st = false) then
+                    generalMove st pieces Right coord
+                else generalMove st pieces Left coord 
+        ) List.empty board
+    
+    
             
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
 
@@ -247,12 +259,12 @@ module Scrabble =
                 if (Map.isEmpty st.boardWithWords) then
                     firstMove st pieces Right
                 else
-                    generalMove st pieces Down
+                    mapMove st pieces st.boardWithWords (0,0)
             
             let wordMove = longestWord findMove  
             let playMove =
                 match findMove with
-                |[] -> send cstream SMPass
+                |[] -> send cstream (SMChange tilesToChange)
                 |_ -> send cstream (SMPlay wordMove)
            
             playMove

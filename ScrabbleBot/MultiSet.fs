@@ -38,3 +38,6 @@
 
     let foldBack f (M(m)) acc =
         Map.foldBack f m acc
+        
+    let toList (M(m)) =
+        Map.toList m
