@@ -76,7 +76,7 @@ module State =
         List.fold (fun acc piece -> MultiSet.removeSingle (fst (snd (piece))) acc) hand moves
 
     let addToHand hand newPieces =
-        List.fold (fun acc (x, k) -> MultiSet.add x k acc) hand newPieces
+        List.fold (fun acc (id, amount) -> MultiSet.add id amount acc) hand newPieces
         
     
     // fold over listen man får af CMSuccess - ms, som er moves - add to Map af board = boardsWithWords.
@@ -211,9 +211,15 @@ module Scrabble =
         )coord st.boardWithWords
         
     let mapMove (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) dir (coord: coord) =
+        // check for words one way (Right or Down)
         let coordsToStartWith = findMostDirectionalMove st pieces (switchDir dir) coord
-        generalMove st pieces (turnBetweenDownAndRight dir) coordsToStartWith
-    
+        let moveOneDirection = generalMove st pieces (turnBetweenDownAndRight dir) coordsToStartWith
+        // check for words other way (Down or Right)
+        // if we do this, it might try to place "FANNEDOUTLAY", so it tries to places outlay after the d - fanned, which was first move
+        let coordsToStartWithSnd = findMostDirectionalMove st pieces dir coord
+        let moveAnotherDirection = generalMove st pieces dir coordsToStartWithSnd
+        let moveList = moveOneDirection@moveAnotherDirection
+        moveList
             
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
 
