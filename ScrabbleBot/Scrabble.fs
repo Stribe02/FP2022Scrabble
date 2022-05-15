@@ -174,43 +174,49 @@ module Scrabble =
             
         aux st.dict st.hand st.boardWithWords List.empty (-1,0)
         
-        
-(*    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) dir  =
+        (*
+            anden metode, der folder over coord fra board, der kalder på generalMove
+            
+            FLY ->
+ *)
+    // helper method calling on generalMove
+    // checke
+    let mapMove (st: State.state) (board: Map<coord, char>) dir (coord: coord) =
+        Map.fold(fun acc word ->
+            checkAvailableDirFromCoord coord dir
+            
+            ) Map.empty board
+            
+    
+    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) dir (coord: coord) =
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
-            let tryWord dir =
-                MultiSet.fold (fun acc piece _ ->
-                    let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
-                    let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
-                    let cord = next dir coord
-                     
+            MultiSet.fold (fun acc piece _ ->
+                let ch = Map.find piece pieces |> Seq.head |> fst // getting the char as it's the first in the set
+                let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
+                let cord = next dir coord
+                
+                match Map.tryFind cord st.boardWithWords with
+                | Some c -> // something is on the board
+                    match Dictionary.step c dict with
+                    | Some (b',d') ->
+                        aux d' hand board mov coord // call with new found char, but don't add to WordSoFar list.
+                    | None -> acc
+                | None -> 
                     let newHand = MultiSet.removeSingle piece hand // remove char from hand
                    
                     match Dictionary.step ch dict with // step med char
                     | Some (b, d) ->
                         let letter = cord, (piece, (ch,pv))
-                        let wordSofar = (mov@[letter])
+                        let wordSoFar = (mov@[letter])
                                
                         if b = true then
-                            wordSofar::acc@(aux d newHand board wordSofar cord)
+                            wordSoFar::acc@(aux d newHand board wordSoFar cord)
                         else
-                            acc@(aux d newHand board wordSofar cord)
-                            
+                            acc@(aux d newHand board wordSoFar cord)    
                     | None -> acc
-                    
-                ) List.Empty hand
+            ) List.Empty hand
 
-            Map.fold(fun x cds ->
-                if (checkAvailableDirFromCoord cds Up st) then
-                
-                      
-                  tryWord Down
-                else if (checkAvailableDirFromCoord cds Left st) then
-                  tryWord Right
-                else []
-            
-            ) List.empty st.boardWithWords
- 
-        aux st.dict st.hand st.boardWithWords List.empty (0,0)*)
+        aux st.dict st.hand st.boardWithWords List.empty coord
     
     let longestWord (words: ((int * int) * (uint32 * (char * int))) list list) =
         List.fold(fun bestWord word ->
