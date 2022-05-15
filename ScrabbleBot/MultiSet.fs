@@ -38,6 +38,13 @@
 
     let foldBack f (M(m)) acc =
         Map.foldBack f m acc
-        
-    let toList (M(m)) =
-        Map.toList m
+    
+    
+         
+    let rec helper (acc: 'a list) (key: 'a) (value: uint32) : 'a list = 
+        match value with
+        | value when value > 0u -> helper (key::acc) key (value-1u)
+        | _ -> acc
+    
+    let toList (M(m)) : 'a list =
+        List.foldBack (fun piece acc -> helper acc (fst piece) (snd piece)) (Map.toList m) List.Empty
