@@ -151,7 +151,7 @@ module Scrabble =
  
             
     
-    let generalMove (st: State.state) (pieces: Map<uint32, 'a>) (dir: dir) (coord: coord) =
+    let generalMove (st: State.state) (dictionary: Dict) (pieces: Map<uint32, 'a>) (dir: dir) (coord: coord) =
    
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
             
@@ -165,7 +165,7 @@ module Scrabble =
                 | Some c -> // something is on the board
                     match Dictionary.step c dict with
                     | Some (b',d') ->
-                        
+                        //debugPrint(sprintf "Something is on the board at %A stepping with %A's dict\n" coord c)
                         aux d' hand board mov (next dir coord) // call with new found char, but don't add to WordSoFar list.
                     | None -> acc
                 | None -> 
@@ -173,17 +173,18 @@ module Scrabble =
                    
                     match Dictionary.step ch dict with // step med char
                     | Some (b, d) ->
+                        //debugPrint(sprintf "Stepped with %A's dict and found subDict\n" ch)
                         let letter = coord, (piece, (ch,pv))
-                        let wordSoFar = (mov@[letter])
-                               
+                        let wordSoFar = (mov@[letter]) 
                         if b = true then
-                            wordSoFar::acc@(aux  d newHand board wordSoFar (next dir coord))
+                            debugPrint(sprintf "word found:%A\n" wordSoFar)
+                            wordSoFar::acc@(aux d newHand board wordSoFar (next dir coord))
                         else
-                            acc@(aux  d newHand board wordSoFar (next dir coord))    
+                           acc@(aux d newHand board wordSoFar (next dir coord))  
                     | None -> acc
             ) List.Empty hand
        
-        aux st.dict st.hand st.boardWithWords List.empty coord
+        aux dictionary st.hand st.boardWithWords List.empty coord
         
     
     let longestWord (words: ((int * int) * (uint32 * (char * int))) list list) =
@@ -195,9 +196,9 @@ module Scrabble =
                 
         ) List.Empty words
         
-    let findMostDirectionalMove (st: State.state) dir (coord: coord) =
+    let rec findMostDirectionalMove (st: State.state) dir (coord: coord) =
         match Map.tryFind coord st.boardWithWords with
-        | Some c -> coord
+        | Some c -> findMostDirectionalMove st dir (next dir coord)
         | None -> next (switchDir dir) coord
         
         
@@ -207,8 +208,8 @@ module Scrabble =
             let coordsToStartWithLeft = findMostDirectionalMove st Left coord
             let coordToStartWithUp = findMostDirectionalMove st Up coord
             
-            let left = generalMove st pieces Right coordsToStartWithLeft
-            let up = generalMove st pieces Down coordToStartWithUp
+            let left = generalMove st st.dict pieces Right coordsToStartWithLeft
+            let up = generalMove st st.dict pieces Down coordToStartWithUp
             
             left @ up
         )List.Empty board
@@ -243,11 +244,14 @@ module Scrabble =
                         
             
            // let wordMove = longestWord findMove
-            let wordmove = longestWord findMove
+            //let wordmove = findMove.Head
+            debugPrint (sprintf "findMove Last element: %A \n" (List.last findMove))
+            debugPrint(sprintf "findMove First element: %A\n" (List.head findMove))
+
             let playMove =
                 match findMove with
                 |[] -> send cstream (SMChange tilesToChange)
-                |_ -> send cstream (SMPlay wordmove)
+                |_ -> send cstream (SMPlay findMove.Head)
            
             playMove
             let msg = recv cstream
