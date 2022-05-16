@@ -57,14 +57,14 @@ module State =
           boardWithWords: Map<coord, char>
           dict: ScrabbleUtil.Dictionary.Dict
           playerNumber: uint32
-          hand: MultiSet.MultiSet<uint32> }
+          hand: MultiSet.MultiSet<uint32>}
 
     let mkState b bww d pn h =
         { board = b
           boardWithWords = bww
           dict = d
           playerNumber = pn
-          hand = h }
+          hand = h}
 
     let board st = st.board
     let boardWithWords st = st.boardWithWords
@@ -85,11 +85,6 @@ module State =
             // mkState - med alt i statet
         let st' = mkState st.board piecesOnBoard st.dict st.playerNumber st.hand
         st'
-    // add playerPoints - ellers ligge vi det ikke til
-    
-   
-
-
 
 
 module Scrabble =
@@ -165,7 +160,6 @@ module Scrabble =
                 | Some c -> // something is on the board
                     match Dictionary.step c dict with
                     | Some (b',d') ->
-                        //debugPrint(sprintf "Something is on the board at %A stepping with %A's dict\n" coord c)
                         aux d' hand board mov (next dir coord) // call with new found char, but don't add to WordSoFar list.
                     | None -> acc
                 | None -> 
@@ -173,11 +167,9 @@ module Scrabble =
                    
                     match Dictionary.step ch dict with // step med char
                     | Some (b, d) ->
-                        //debugPrint(sprintf "Stepped with %A's dict and found subDict\n" ch)
                         let letter = coord, (piece, (ch,pv))
                         let wordSoFar = (mov@[letter]) 
                         if b = true then
-                            //debugPrint(sprintf "word found:%A\n" wordSoFar)
                             wordSoFar::acc@(aux d newHand board wordSoFar (next dir coord))
                         else
                            acc@(aux d newHand board wordSoFar (next dir coord))  
@@ -234,10 +226,9 @@ module Scrabble =
                   
             let wordMove = longestWord findMove
             
+
             debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) wordMove) // keep the debug lines. They are useful.
 
-            //debugPrint (sprintf "findMove Last element: %A \n" (List.last findMove))
-            //debugPrint(sprintf "findMove First element: %A\n" (List.head findMove))
 
             let playMove =
                 match findMove with
@@ -262,10 +253,11 @@ module Scrabble =
                     List.fold
                         (fun acc (coord, (tileNumber, (aChar, _))) -> Map.add coord aChar acc)
                         st.boardWithWords
-                        moves      
-
+                        moves
+              
+               
                 let st' =
-                    State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand
+                    State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber addedToHand 
 
                 aux st' 
 
@@ -296,18 +288,20 @@ module Scrabble =
 
                 let st' =
                     State.mkState st.board boardWithNewWordAdded st.dict st.playerNumber st.hand
-
+                    
                 aux st'
             | RCM (CMChange(playerId, numberOfTiles)) ->
                 // Other player successfully changed pieces
                 // st.hand
-                let emptyHand = MultiSet.empty
+                
+
                 
                 let st' =
-                    State.mkState st.board st.boardWithWords st.dict st.playerNumber emptyHand
+                    State.mkState st.board st.boardWithWords st.dict st.playerNumber st.hand
                 aux st'    
             | RCM (CMChangeSuccess(newTiles)) ->
                 // we have successfully changed pieces
+
                 let emptyHand = MultiSet.empty
                 let newHand = State.addToHand emptyHand newTiles    
                 let st' =
@@ -315,9 +309,10 @@ module Scrabble =
                 aux st'    
             | RCM (CMGameOver _) -> ()
 
-            | RCM a -> failwith (sprintf "not implmented: %A" a)
+            //| RCM a -> failwith (sprintf "not implmented: %A" a)
 
             | RGPE err ->
+                
                 printfn "Gameplay Error:\n%A" err
                 aux st
 
