@@ -177,7 +177,7 @@ module Scrabble =
                         let letter = coord, (piece, (ch,pv))
                         let wordSoFar = (mov@[letter]) 
                         if b = true then
-                            debugPrint(sprintf "word found:%A\n" wordSoFar)
+                            //debugPrint(sprintf "word found:%A\n" wordSoFar)
                             wordSoFar::acc@(aux d newHand board wordSoFar (next dir coord))
                         else
                            acc@(aux d newHand board wordSoFar (next dir coord))  
@@ -220,17 +220,7 @@ module Scrabble =
 
         let rec aux (st: State.state) =
             Print.printHand pieces (State.hand st)
-
-            // remove the force print when you move on from manual input (or when you have learnt the format)
-            forcePrint
-                "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-
-            let input = System.Console.ReadLine()
-            let move = RegEx.parseMove input
-
-            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
-            //send cstream (SMPlay move)
-
+           
             let tilesToChange = MultiSet.toList st.hand
 
             let findMove =
@@ -241,21 +231,22 @@ module Scrabble =
                 else
                    mapMove st pieces st.boardWithWords
           
-                        
+                  
+            let wordMove = longestWord findMove
             
-           // let wordMove = longestWord findMove
-            //let wordmove = findMove.Head
-            debugPrint (sprintf "findMove Last element: %A \n" (List.last findMove))
-            debugPrint(sprintf "findMove First element: %A\n" (List.head findMove))
+            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) wordMove) // keep the debug lines. They are useful.
+
+            //debugPrint (sprintf "findMove Last element: %A \n" (List.last findMove))
+            //debugPrint(sprintf "findMove First element: %A\n" (List.head findMove))
 
             let playMove =
                 match findMove with
                 |[] -> send cstream (SMChange tilesToChange)
-                |_ -> send cstream (SMPlay findMove.Head)
+                |_ -> send cstream (SMPlay wordMove)
            
             playMove
             let msg = recv cstream
-            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) wordMove) // keep the debug lines. They are useful.
 
             match msg with
             | RCM (CMPlaySuccess (moves, points, newPieces)) ->
