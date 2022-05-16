@@ -123,7 +123,7 @@ module Scrabble =
         |Some c -> false
         |None -> true
         
-    let firstMove (counter: int) (st: State.state) (pieces: Map<uint32, 'a>) dir =
+    let firstMove  (st: State.state) (pieces: Map<uint32, 'a>) dir =
         let rec aux (dict: Dict) (hand: MultiSet.MultiSet<uint32>) (board: Map<coord, char>) (mov: ((int * int) * (uint32 * (char * int))) list) (coord: coord) =
             MultiSet.fold (fun acc piece _ ->
                 // getting char and pv out of pieces
@@ -148,14 +148,6 @@ module Scrabble =
             ) List.Empty hand
             
         aux st.dict st.hand st.boardWithWords List.empty (-1,0)
-        
-        (*
-            anden metode, der folder over coord fra board, der kalder på generalMove
-            
-            FLY ->
- *)
-    // helper method calling on generalMove
-    // checke
  
             
     
@@ -169,10 +161,11 @@ module Scrabble =
                 let pv = Map.find piece pieces |> Seq.head |> snd // pv second in the set: tile = Set<char*int>
                 //let cord = next dir coord
                 
-                match Map.tryFind coord st.boardWithWords with
+                match Map.tryFind coord board with
                 | Some c -> // something is on the board
                     match Dictionary.step c dict with
                     | Some (b',d') ->
+                        
                         aux d' hand board mov (next dir coord) // call with new found char, but don't add to WordSoFar list.
                     | None -> acc
                 | None -> 
@@ -189,12 +182,6 @@ module Scrabble =
                             acc@(aux  d newHand board wordSoFar (next dir coord))    
                     | None -> acc
             ) List.Empty hand
-//        if (dire = Right) then
-//            let turn = turnBetweenDownAndRight dire
-//            aux turn st.dict st.hand st.boardWithWords List.empty coord
-//        else
-//            let turn = dire
-//            aux turn st.dict st.hand st.boardWithWords List.empty coord
        
         aux st.dict st.hand st.boardWithWords List.empty coord
         
@@ -208,36 +195,25 @@ module Scrabble =
                 
         ) List.Empty words
         
-        // metode, der finder til ventre
-        // matcher på board i en bestemt retning
-        // hvis man finder, opdatere coord
-        // returnere coordsæt
-    let findMostDirectionalMove (st: State.state) (pieces: Map<uint32, 'a>) dir (coord: coord) =
-        Map.fold(fun acc cord _ ->
-            match Map.tryFind coord st.boardWithWords with
-            | Some c -> next dir cord
-            | None -> acc
-        )coord st.boardWithWords
+    let findMostDirectionalMove (st: State.state) dir (coord: coord) =
+        match Map.tryFind coord st.boardWithWords with
+        | Some c -> coord
+        | None -> next (switchDir dir) coord
         
-    let mapMove (counter: int) (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) dir (coord: coord) =
+        
+    let mapMove (st: State.state) (pieces: Map<uint32, 'a>) (board: Map<coord, char>) =
         // check for words one way (Right or Down)
-        let coordsToStartWith = findMostDirectionalMove st pieces (switchDir dir) coord
-        //let moveOneDirection =
-        generalMove st pieces dir coordsToStartWith
+        Map.fold(fun acc coord _ ->
+            let coordsToStartWithLeft = findMostDirectionalMove st Left coord
+            let coordToStartWithUp = findMostDirectionalMove st Up coord
+            
+            let left = generalMove st pieces Right coordsToStartWithLeft
+            let up = generalMove st pieces Down coordToStartWithUp
+            
+            left @ up
+        )List.Empty board
         
-        // check for words other way (Down or Right)
-        // if we do this, it might try to place "FANNEDOUTLAY", so it tries to places outlay after the d - fanned, which was first move
-        
-        
-        (*let coordsToStartWithSnd = findMostDirectionalMove st pieces dir coord
-        let moveAnotherDirection = generalMove st pieces dir coordsToStartWithSnd
-        let moveList = moveOneDirection@moveAnotherDirection
-        moveList*)
-        
-    let mutable i = 1
-    let X() =
-        i <- i + 1
-        i
+ 
             
     let playGame cstream (pieces: Map<uint32, tile>) (st: State.state) =
 
@@ -255,27 +231,23 @@ module Scrabble =
             //send cstream (SMPlay move)
 
             let tilesToChange = MultiSet.toList st.hand
-            
-            
-            
+
             let findMove =
                
                 if (Map.isEmpty st.boardWithWords) then
-                    firstMove (X()) st pieces Right
+                    firstMove st pieces Right
                     
                 else
-                    if (i % 2 = 0) then
-                        mapMove (X()) st pieces st.boardWithWords Down (0,0)
-                        
-                    else
-                        mapMove (X()) st pieces st.boardWithWords Right (0,0)
+                   mapMove st pieces st.boardWithWords
+          
                         
             
-            let wordMove = longestWord findMove  
+           // let wordMove = longestWord findMove
+            let wordmove = longestWord findMove
             let playMove =
                 match findMove with
                 |[] -> send cstream (SMChange tilesToChange)
-                |_ -> send cstream (SMPlay wordMove)
+                |_ -> send cstream (SMPlay wordmove)
            
             playMove
             let msg = recv cstream
